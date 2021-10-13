@@ -23,7 +23,7 @@ fn print_tree<T: Display>(tree: &Tree<T>, n: u32) {
         for _ in 0..=n {
             print!("\t");
         }
-        println!("{:?}{}", col, x);
+        println!("{:?}: {}", col, x);
         print_tree(left, n + 1);
     }
 }
@@ -51,23 +51,13 @@ fn balance<T: Ord>(tree: Tree<T>) -> Tree<T> {
 fn ins<T: Ord + Clone>(tree: &Tree<T>, element: T) -> Tree<T> {
     use std::cmp::Ordering;
     if let s @ Node(col, left, x, right) = tree {
-        match element.cmp(x) {
-            Ordering::Greater => Node(
-                *col,
-                left.to_owned(),
-                x.to_owned(),
-                box balance(ins(right, element)),
-            ),
-            Ordering::Less => Node(
-                *col,
-                box balance(ins(left, element)),
-                x.to_owned(),
-                right.to_owned(),
-            ),
+        balance(match element.cmp(x) {
+            Ordering::Greater => Node(*col, left.to_owned(), x.to_owned(), box ins(right, element)),
+            Ordering::Less => Node(*col, box ins(left, element), x.to_owned(), right.to_owned()),
             Ordering::Equal => s.to_owned(),
-        }
+        })
     } else {
-        Node(Red, Box::new(Empty), element, Box::new(Empty))
+        Node(Red, box Empty, element, box Empty)
     }
 }
 
@@ -80,7 +70,7 @@ fn insert<T: Clone + Ord>(tree: &mut Tree<T>, element: T) {
 
 fn main() {
     let mut tree = Empty;
-    for i in 0..=10 {
+    for i in 0..=1000 {
         insert(&mut tree, i);
     }
     print_tree(&tree, 0);
